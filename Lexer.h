@@ -110,12 +110,12 @@ Token Lexer::nextToken() {
                 } 
                 // 情况3：当前字符是冒号
                 else if (c == ':') {
-                    if (c == '=') {
+                    if (peek() == '=') {
                         tokenString += c;  // 这里我们得到了 ":=" 这个赋值符号
                         return Token{TokenType::ASSIGN, tokenString, line, column};
                     } else {
                         // 回退一个字符，因为我们已经读取了下一个字符但它不是 "="
-                        pos--;
+                        ungetNextChar();
                         // 处理只有一个冒号的情况，比如它可能是一个错误的token
                         return Token{TokenType::INVALID, tokenString, line, column};
                         // 或者冒号本身在你的语言中是一个有效的token
@@ -123,10 +123,75 @@ Token Lexer::nextToken() {
                     }
                     break;
                 }
-                else if (c == ' ' || c == '\t' || c == '\n') {
-                    // 忽略空白字符
-                    skipWhitespace();
-                } 
+                // 情况4：当前字符是其他符号
+                else if (c == '<') {
+                    if (peek() == '=') {
+                        tokenString += c;
+                        tokenString += advance();
+                        return Token{TokenType::LESS_EQUAL, tokenString, line, column};
+                    } else if (peek() == '>') {
+                        tokenString += c;
+                        tokenString += advance();
+                        return Token{TokenType::NOT_EQUAL, tokenString, line, column};
+                    } else {
+                        tokenString += c;
+                        return Token{TokenType::LESS, tokenString, line, column};
+                    }
+                }
+                else if (c == '>') {
+                    if (peek() == '=') {
+                        tokenString += c;
+                        tokenString += advance();
+                        return Token{TokenType::GREATER_EQUAL, tokenString, line, column};
+                    } else {
+                        tokenString += c;
+                        return Token{TokenType::GREATER, tokenString, line, column};
+                    }
+                }
+                else if (c == '=') {
+                    if (peek() == '=') {
+                        tokenString += c;
+                        tokenString += advance();
+                        return Token{TokenType::EQUAL, tokenString, line, column};
+                    } else {
+                        tokenString += c;
+                        return Token{TokenType::ASSIGN, tokenString, line, column};
+                    }
+                }
+                else if (c == '!') {
+                    if (peek() == '=') {
+                        tokenString += c;
+                        tokenString += advance();
+                        return Token{TokenType::NOT_EQUAL, tokenString, line, column};
+                    } else {
+                        tokenString += c;
+                        return Token{TokenType::INVALID, tokenString, line, column};
+                    }
+                }
+                else if (c == '-') {
+                    // 生成减号token
+                    return Token{TokenType::MINUS, std::string(1, c), line, column};
+                }
+                else if (c == '*') {
+                    // 生成乘号token
+                    return Token{TokenType::MULTIPLY, std::string(1, c), line, column};
+                }
+                else if (c == '(') {
+                    // 生成左括号token
+                    return Token{TokenType::LEFT_PAREN, std::string(1, c), line, column};
+                }
+                else if (c == ')') {
+                    // 生成右括号token
+                    return Token{TokenType::RIGHT_PAREN, std::string(1, c), line, column};
+                }
+                else if (c == ';'){
+                    // 生成分号token
+                    return Token{TokenType::SEMICOLON, std::string(1, c), line, column};
+                }
+                else if (c == ',') {
+                    // 生成逗号token
+                    return Token{TokenType::COMMA, std::string(1, c), line, column};
+                }
                 else if (c == '+') {
                     // 生成加号token
                     return Token{TokenType::PLUS, std::string(1, c), line, column};
@@ -140,6 +205,18 @@ Token Lexer::nextToken() {
                         return Token{TokenType::DIVIDE, std::string(1, c), line, column};
                     }
                 }
+                // 情况5：当前字符是空白字符
+                else if (c == ' ' || c == '\t' || c == '\n') {
+                    // 忽略空白字符
+                    skipWhitespace();
+                }
+                // 情况6：当前字符是文件末尾
+                else if (c == '\0') {
+                    state = State::DONE;
+                    // 生成END_OF_FILE token
+                    return Token{TokenType::END_OF_FILE, tokenString, line, column};
+                }
+                // 情况7：当前字符是其他字符
                 else {
                     state = State::DONE;
                     // 根据c生成单个字符的token
@@ -157,7 +234,8 @@ Token Lexer::nextToken() {
                 break;
 
             case State::IN_ID:
-                if (isalnum(c) || c == '_') {
+                // 识别标识符，字母开头之后可以是字母或数字
+                if (isalnum(c) || isdigit(c)) {
                     tokenString += c;
                 } else {
                     // 生成IDENTIFIER token，回退一个字符
