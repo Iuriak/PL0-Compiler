@@ -244,9 +244,9 @@ void Parser::conditionStatement(){
     auto [orp, arg1, arg2] = condition();    // <条件>
     // 生成中间代码
     auto label1 = IR.size();    
-    storeIRCode("j"+orp, arg1, arg2, "M");
+    storeIRCode(orp, arg1, arg2, "M");
     auto label2 = IR.size();
-    storeIRCode("j", "_", "_", "M");
+    storeIRCode("JUMPFALSE", "_", "_", "M");
     // token 此时应该指向 THEN
     if(token.getType() != TokenType::THEN) {
         error(token, "Expect 'THEN' in condition statement.");
@@ -269,9 +269,9 @@ void Parser::cyclicStatement(){
     auto [orp, arg1, arg2] = condition();    // <条件>
     // 生成中间代码
     auto label1 = IR.size();
-    storeIRCode("j"+orp, arg1, arg2, "M");
+    storeIRCode(orp, arg1, arg2, "M");
     auto label2 = IR.size();
-    storeIRCode("j", "_", "_", "M");
+    storeIRCode("JUMPFALSE", "_", "_", "M");
     // token 指向 DO
     if(token.getType() != TokenType::DO) {
         error(token, "Expect 'DO' in cyclic statement.");
@@ -279,7 +279,7 @@ void Parser::cyclicStatement(){
     nextToken();
     IR[label1][3] = to_string(IR.size());
     statement();    // <语句>
-    storeIRCode("j", "_", "_", to_string(label1 + base_addr));
+    storeIRCode("JUMP", "_", "_", to_string(label1 + base_addr));
     IR[label2][3] = to_string(IR.size() + base_addr);
     // 语义分析与中间代码生成
 }
