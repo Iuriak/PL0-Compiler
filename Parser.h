@@ -41,7 +41,7 @@ private:
     void conditionStatement(); // 实现对应于文法中的 <条件语句>
     void cyclicStatement();     // 实现对应于文法中的 <当型循环语句>
     void compoundStatement();  // 实现对应于文法中的 <复合语句>
-    void voidStatement();      // 实现对应于文法中的 <空语句>
+    //void voidStatement();      // 实现对应于文法中的 <空语句>
     
     string expression();         // 实现对应于文法中的 <表达式>
     string term();               // 实现对应于文法中的 <项>
@@ -51,10 +51,10 @@ private:
     // <关系运算符>→ = | <> | < | <= | > | >=
     array<string, 3> condition();   // 实现对应于文法中的 <条件>
 
-    Token consume(TokenType type, const std::string &message);  // 消耗当前Token，如果类型不匹配则抛出异常
-    bool match(TokenType type);                                 // 如果当前Token类型匹配，消耗当前Token并返回true，否则返回false
-    bool check(TokenType type);                                 // 检查当前Token类型是否匹配
-    Token advance();                                            // 消耗当前Token并返回
-    bool isAtEnd();                                             // 是否已经到达Token序列末尾
+    //Token consume(TokenType type, const std::string &message);  // 消耗当前Token，如果类型不匹配则抛出异常
+    //bool match(TokenType type);                                 // 如果当前Token类型匹配，消耗当前Token并返回true，否则返回false
+    //bool check(TokenType type);                                 // 检查当前Token类型是否匹配
+    //Token advance();                                            // 消耗当前Token并返回
+    //bool isAtEnd();                                             // 是否已经到达Token序列末尾
     void error(const Token &token, const std::string &message); // 抛出一个解析错误
 };

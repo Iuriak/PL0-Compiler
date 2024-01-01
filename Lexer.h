@@ -9,6 +9,8 @@
 #include <vector>
 #include <regex>
 
+using namespace std;
+
 /**
  * Token类型
  * */
@@ -53,11 +55,11 @@ public:
     Token(TokenType type, std::string value) : type(type), value(value) {}
     Token() : type(TokenType::INVALID), value("") {}
     TokenType getType() const { return type; }
-    std::string getValue() const { return value; }
+    string getValue() const { return value; }
 
 private:
     TokenType type;    // Token类型
-    std::string value; // Token值
+    string value; // Token值
 };
 
 /**
@@ -69,7 +71,7 @@ class Lexer
     size_t pos = 0;     // 当前字符位置
     int line = 1;       // 当前行号
     int column = 1;     // 当前列号
-    std::vector<Token> tokens;
+    vector<Token> tokens;
 
     // 增加一个用于映射保留关键字和TokenType的map
     const std::map<std::string, TokenType> keywords = {
@@ -106,8 +108,8 @@ public:
     Lexer(const std::string &src) : source(src), pos(0), line(1), column(1) {}
     std::vector<Token> tokenize();
     Token nextToken();  // 获取下一个Token
-    int getLine() const { return line; }
-    int getColumn() const { return column; }
+    int getLine() const { return line; }        // 获取当前行号
+    int getColumn() const { return column; }    // 获取当前列号
 
 private:
     enum class State    // 词法分析器状态
@@ -123,12 +125,12 @@ private:
         DONE        // 结束状态
     };
     State state = State::START; // 当前状态
-    std::string tokenString;
-    std::vector<Token> tokens;
+    string tokenString;
+    // vector<Token> tokens;
     Token handleSymbol();
-    void ungetNextChar();
-    void addToken(TokenType type, const std::string &value);
-    void addToken(TokenType type);
+    //void ungetNextChar();
+    //void addToken(TokenType type, const std::string &value);
+    //void addToken(TokenType type);
     void read();
     bool match(char expected);
     void skipWhitespace();

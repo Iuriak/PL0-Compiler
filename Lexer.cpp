@@ -13,7 +13,7 @@
  * */
 Token Lexer::nextToken()
 {
-    state = State::START;
+    // state = State::START;
     tokenString = "";
     char ch;
 
@@ -271,7 +271,7 @@ Token Lexer::handleSymbol()
         return Token(TokenType::INVALID, std::string(1, ch));
     }
 }
-
+/*
 std::vector<Token> Lexer::tokenize()
 {
     Token token = nextToken();
@@ -300,7 +300,7 @@ void Lexer::addToken(TokenType type)
 {
     addToken(type, "");
 }
-
+*/
 void Lexer::read()
 {
     if (source[pos] == '\n')

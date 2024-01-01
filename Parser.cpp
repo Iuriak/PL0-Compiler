@@ -10,7 +10,7 @@
 #include <fstream>
 #include <map> 
 
-//using namespace std;
+using namespace std;
 
 map<string, string> idTable;    // 变量表
 map<string, string> tempTable;  // 临时变量表
@@ -32,11 +32,12 @@ string getTempVar(){
 
 void Parser::output(std::ofstream &IRout, std::ofstream &ITout) {
     // 输出中间代码
+    int ord = 100;
     for(auto i : IR) {
-        IRout << "(" << i[0] << " " << i[1] << " " << i[2] << ")" << " " << i[3] << endl;
+        IRout << ord++ << " (" << i[0] << " " << i[1] << " " << i[2] << " " << i[3] << ")" << endl;
     }
     // 输出变量表
-    ITout << "name,type" << endl;
+    ITout << "Identifier,Type" << endl;
     for(auto i : idTable) {
         ITout << i.first << "," << i.second << endl;
     }
@@ -104,13 +105,16 @@ void Parser::block() {
  * <常量说明>→CONST <常量定义>{，<常量定义>} ; （注： { }中的项表⽰可重复若⼲次）
 */
 void Parser::constDeclaration() {
-    nextToken();
+    // token 指向 CONST
+    /*nextToken();
     if(token.getType() != TokenType::CONST) {
         error(token, "Expect 'CONST' at the beginning of const declaration.");
-    }
+    }*/
     constDefinition();
+    nextToken();
     while(token.getType() == TokenType::COMMA) {
         constDefinition();
+        nextToken();
     }
     if(token.getType() != TokenType::SEMICOLON) {
         error(token, "Expect ';' at the end of const declaration.");
@@ -147,21 +151,25 @@ void Parser::constDefinition(){
  * <变量说明>→VAR<标识符>{，<标识符>};
 */
 void Parser::varDeclaration() {
-    nextToken();
+    // token 指向 VAR
+    /*nextToken();
     if(token.getType() != TokenType::VAR) {
         error(token, "Expect 'VAR' at the beginning of var declaration.");
-    }
-    idTable.insert(pair<string, string>(token.getValue(), "var")); // 将变量加入变量表
+    }*/
+    //idTable.insert(pair<string, string>(token.getValue(), "var")); // 将变量加入变量表
     nextToken();
     if(token.getType() != TokenType::IDENTIFIER) {
         error(token, "Expect identifier in var declaration.");
     }
+    idTable.insert(pair<string, string>(token.getValue(), "var")); // 将变量加入变量表
+    nextToken();
     while(token.getType() == TokenType::COMMA) {
         nextToken();
         if(token.getType() != TokenType::IDENTIFIER) {
             error(token, "Expect identifier in var declaration.");
         }
         idTable.insert(pair<string, string>(token.getValue(), "var")); // 将变量加入变量表
+        nextToken();
     }
     if(token.getType() != TokenType::SEMICOLON) {
         error(token, "Expect ';' at the end of var declaration.");
@@ -206,18 +214,19 @@ void Parser::statement() {
 */
 void Parser::assignmentStatement(){
     // token 指向 IDENTIFIER
+    string id = token.getValue();   // <标识符>
     nextToken();
     if(token.getType() != TokenType::ASSIGN) {
         error(token, "Expect ':=' in assignment statement.");
     }
     string exp = expression();   // <表达式>
     // 语义分析与中间代码生成
-    if(idTable.find(token.getValue()) == idTable.end()) {
+    if(idTable.find(id) == idTable.end()) {
         error(token, "Identifier not declared.");
     } else{
         string arg1 = exp;
         string arg2 = "_";
-        string result = token.getValue();
+        string result = id;
         storeIRCode(":=", arg1, arg2, result);  // 生成中间代码
     }
 }
@@ -367,6 +376,7 @@ string Parser::term(){
         nextToken();
         // 语义分析与中间代码生成
     }
+
     return result;
 }
 
@@ -401,6 +411,25 @@ string Parser::factor(){
     return result;
 }
 
+/**
+ * condition()方法
+ * 实现对应于文法中的 <条件>
+ * <条件>→<表达式> <关系运算符> <表达式>
+*/
+array<string, 3> Parser::condition(){
+    string arg1 = expression(); // <表达式>
+    if(token.getType() != TokenType::EQUAL && token.getType() != TokenType::NOT_EQUAL
+        && token.getType() != TokenType::LESS && token.getType() != TokenType::LESS_EQUAL
+        && token.getType() != TokenType::GREATER && token.getType() != TokenType::GREATER_EQUAL) {
+        error(token, "Expect relation operator in condition.");
+    }
+    string op = token.getValue();   // <关系运算符>
+    //nextToken();
+    string arg2 = expression(); // <表达式>
+    // 语义分析与中间代码生成
+    return {op, arg1, arg2};
+}
+
 /*Token Parser::consume(TokenType type, const std::string& message) {
     if (check(type)) {
         return advance();
@@ -430,8 +459,9 @@ bool Parser::isAtEnd() {
     return current >= tokens.size();
 }
 */
-/*void Parser::error(const Token& token, const std::string& message) {
+void Parser::error(const Token& token, const string& message) {
     // 抛出一个解析错误
-    throw std::runtime_error("Error at [" + std::to_string(token.line) + ":" + std::to_string(token.column) + "]: " + message);
+    throw runtime_error("Error at [" + std::to_string(lexer->getLine()) + ":" + std::to_string(lexer->getColumn()) + "]: " + message);
+    //throw std::runtime_error("Error at [" + std::to_string(token.line) + ":" + std::to_string(token.column) + "]: " + message);
 }
-*/
+

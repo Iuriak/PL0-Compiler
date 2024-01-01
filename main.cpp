@@ -1,7 +1,6 @@
 // main.cpp
 #include "Lexer.h"
 #include "Parser.h"
-#include "IntermediateCodeGenerator.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -10,7 +9,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
     // 从命令行参数获取源代码文件名
-    string inputFileName;
+    string inputFileName = "PROGRAM.txt";
     #include <iostream>
 
     string IRFile = "IR.txt";
