@@ -244,15 +244,17 @@ void Parser::conditionStatement(){
     auto [orp, arg1, arg2] = condition();    // <条件>
     // 生成中间代码
     auto label1 = IR.size();    
-    storeIRCode(orp, arg1, arg2, "M");
+    string temp_IF = getTempVar();          // 临时变量代替条件表达式的值
+    storeIRCode(orp, arg1, arg2, temp_IF);
+
     auto label2 = IR.size();
-    storeIRCode("JUMPFALSE", "_", "_", "M");
+    storeIRCode("JUMPFALSE", temp_IF, "_", "M");
     // token 此时应该指向 THEN
     if(token.getType() != TokenType::THEN) {
         error(token, "Expect 'THEN' in condition statement.");
     }
     nextToken();
-    IR[label1][3] = to_string(IR.size());
+    // IR[label1][3] = to_string(IR.size());
     statement();    // <语句>
     IR[label2][3] = to_string(IR.size()+base_addr);
     // 语义分析与中间代码生成
@@ -269,15 +271,17 @@ void Parser::cyclicStatement(){
     auto [orp, arg1, arg2] = condition();    // <条件>
     // 生成中间代码
     auto label1 = IR.size();
-    storeIRCode(orp, arg1, arg2, "M");
+    string temp_WHILE = getTempVar();          // 临时变量代替条件表达式的值
+    storeIRCode(orp, arg1, arg2, temp_WHILE);
+
     auto label2 = IR.size();
-    storeIRCode("JUMPFALSE", "_", "_", "M");
+    storeIRCode("JUMPFALSE", temp_WHILE, "_", "M");
     // token 指向 DO
     if(token.getType() != TokenType::DO) {
         error(token, "Expect 'DO' in cyclic statement.");
     }
     nextToken();
-    IR[label1][3] = to_string(IR.size());
+    // IR[label1][3] = to_string(IR.size());
     statement();    // <语句>
     storeIRCode("JUMP", "_", "_", to_string(label1 + base_addr));
     IR[label2][3] = to_string(IR.size() + base_addr);
