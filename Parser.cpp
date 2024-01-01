@@ -14,7 +14,8 @@ using namespace std;
 
 map<string, string> idTable;    // 变量表
 map<string, string> tempTable;  // 临时变量表
-int tempVarNum = 0;             // 临时变量编号
+int tempVarNum = 1;             // 临时变量编号
+int base_addr = 100;            // 变量基地址
 
 vector<array<string, 4>> IR;    // 中间代码(三地址代码)
 void storeIRCode(string op, string arg1, string arg2, string result) {
@@ -22,19 +23,19 @@ void storeIRCode(string op, string arg1, string arg2, string result) {
 };
 
 string getTempVar(){
-    while(idTable.find("TempVar"+to_string(tempVarNum)) != idTable.end()
-        || tempTable.find("TempVar"+to_string(tempVarNum)) != tempTable.end()) {
+    while(idTable.find("T"+to_string(tempVarNum)) != idTable.end()
+        || tempTable.find("T"+to_string(tempVarNum)) != tempTable.end()) {
         tempVarNum++;
     }
-    tempTable.insert(pair<string, string>("TempVar"+to_string(tempVarNum), "Temp"));
-    return "TempVar"+to_string(tempVarNum);
+    tempTable.insert(pair<string, string>("T"+to_string(tempVarNum), "Temp"));
+    return "T"+to_string(tempVarNum);
 }
 
 void Parser::output(std::ofstream &IRout, std::ofstream &ITout) {
     // 输出中间代码
-    int ord = 100;
+    int ord = base_addr;
     for(auto i : IR) {
-        IRout << ord++ << " (" << i[0] << " " << i[1] << " " << i[2] << " " << i[3] << ")" << endl;
+        IRout << ord++ << " (" << i[0] << ", " << i[1] << ", " << i[2] << ", " << i[3] << ")" << endl;
     }
     // 输出变量表
     ITout << "Identifier,Type" << endl;
@@ -87,9 +88,11 @@ void Parser::block() {
     nextToken();
     if(token.getType() == TokenType::CONST) {
         constDeclaration(); // <常量声明>
+        nextToken();
     }
     if(token.getType() == TokenType::VAR) {
         varDeclaration();   // <变量声明>
+        nextToken();
     }
     if(token.getType() == TokenType::END_OF_FILE) {
         return;             // <空语句>
@@ -183,7 +186,7 @@ void Parser::varDeclaration() {
  * <语句>→<赋值语句> | <条件语句 >| <循环语句> | <复合语句> | <空语句>
 */
 void Parser::statement() {
-    nextToken();
+    // nextToken();
     switch(token.getType()) {
         case TokenType::IDENTIFIER:
             assignmentStatement();  // <赋值语句>
@@ -213,7 +216,7 @@ void Parser::statement() {
  * <赋值语句>→<标识符>:=<表达式>
 */
 void Parser::assignmentStatement(){
-    // token 指向 IDENTIFIER
+    // token 已经指向 IDENTIFIER
     string id = token.getValue();   // <标识符>
     nextToken();
     if(token.getType() != TokenType::ASSIGN) {
@@ -244,15 +247,14 @@ void Parser::conditionStatement(){
     storeIRCode("j"+orp, arg1, arg2, "M");
     auto label2 = IR.size();
     storeIRCode("j", "_", "_", "M");
-    nextToken();
-    // token 指向 THEN
+    // token 此时应该指向 THEN
     if(token.getType() != TokenType::THEN) {
         error(token, "Expect 'THEN' in condition statement.");
     }
     nextToken();
     IR[label1][3] = to_string(IR.size());
     statement();    // <语句>
-    IR[label2][3] = to_string(IR.size());
+    IR[label2][3] = to_string(IR.size()+base_addr);
     // 语义分析与中间代码生成
 }
 
@@ -263,13 +265,13 @@ void Parser::conditionStatement(){
 */
 void Parser::cyclicStatement(){
     // token 指向 WHILE
+
     auto [orp, arg1, arg2] = condition();    // <条件>
     // 生成中间代码
     auto label1 = IR.size();
     storeIRCode("j"+orp, arg1, arg2, "M");
     auto label2 = IR.size();
     storeIRCode("j", "_", "_", "M");
-    nextToken();
     // token 指向 DO
     if(token.getType() != TokenType::DO) {
         error(token, "Expect 'DO' in cyclic statement.");
@@ -277,8 +279,8 @@ void Parser::cyclicStatement(){
     nextToken();
     IR[label1][3] = to_string(IR.size());
     statement();    // <语句>
-    storeIRCode("j", "_", "_", to_string(label1));
-    IR[label2][3] = to_string(IR.size());
+    storeIRCode("j", "_", "_", to_string(label1 + base_addr));
+    IR[label2][3] = to_string(IR.size() + base_addr);
     // 语义分析与中间代码生成
 }
 
@@ -288,9 +290,9 @@ void Parser::cyclicStatement(){
  * <复合语句>→BEGIN <语句>{; <语句>} END
 */
 void Parser::compoundStatement(){
-    // token 指向 BEGIN
-    statement();    // <语句>
+    // token 已经指向 BEGIN
     nextToken();
+    statement();    // <语句>
     while(1) {
         if(token.getType() == TokenType::SEMICOLON) {
             nextToken();
