@@ -1,8 +1,10 @@
-// Lexer.h
-/**
+/**Lexer.h
  * 词法分析器（Lexer）
  * 使用Thompson算法实现词法分析功能
  */
+
+#pragma once
+
 #include <string>
 #include <vector>
 #include <regex>
