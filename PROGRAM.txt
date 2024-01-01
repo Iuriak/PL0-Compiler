@@ -4,7 +4,12 @@ VAR x,y;
 
 BEGIN
 
+// test single line comment
+
 x:=1;
+
+/* test multiple lines comments
+*/
 
 y:=2;
 

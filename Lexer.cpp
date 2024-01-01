@@ -44,14 +44,19 @@ Token Lexer::nextToken()
                 // 忽略空白字符
                 skipWhitespace();
             }
-            // 情况4：当前字符是文件末尾
+            // 情况4：当前字符是注释
+            else if (ch == '/')
+            {
+                skipComment();
+            }
+            // 情况5：当前字符是文件末尾
             else if (ch == '\0')
             {
                 state = State::DONE;
                 // 生成END_OF_FILE token
                 return Token(TokenType::END_OF_FILE, tokenString);
             }
-            // 情况5：当前字符是其他字符
+            // 情况6：当前字符是其他字符
             else
             {
                 return handleSymbol();
@@ -170,6 +175,7 @@ Token Lexer::handleSymbol()
     case '*':
         return Token(TokenType::MULTIPLY, "*");
     case '/':
+        /*
         if (source[pos] == '/')
         {
             // 单行注释，跳过直到行末
@@ -180,12 +186,12 @@ Token Lexer::handleSymbol()
         }
         else if (source[pos] == '*')
         {
-            // 多行注释，跳过直到 '*/'
+            // 多行注释，跳过直到 '*
             while (!isAtEnd())
             {
                 if (peek() == '*' && peekNext() == '/')
                 {
-                    // 跳过结束的 '*/'
+                    // 跳过结束的 '*
                     read();
                     read();
                     break;
@@ -202,8 +208,8 @@ Token Lexer::handleSymbol()
                 read();
             }
         }
-        else
-            return Token(TokenType::DIVIDE, "/");
+        else*/
+        return Token(TokenType::DIVIDE, "/");
     case '(':
         return Token(TokenType::LEFT_PAREN, "(");
     case ')':
