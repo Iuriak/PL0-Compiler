@@ -144,6 +144,9 @@ void Parser::constDefinition(){
     tempToken.setLine(lexer->getLine());
 
     nextToken();
+    if(token.getType() == TokenType::INVALID) {
+        error(tempToken, "Invalid identifier '"+token.getValue()+"'. Identifiers must begin with a letter.");
+    }
     if(token.getType() != TokenType::IDENTIFIER) {
         error(tempToken, "Expect identifier at the beginning of const definition.");
     }
@@ -242,8 +245,14 @@ void Parser::statement() {
             compoundStatement();    // <复合语句>
             break;
         case TokenType::SEMICOLON:
+            // <空语句>
+            break;
         case TokenType::END:
-            //voidStatement();       // <空语句>
+            storeIRCode("END", "_", "_", "_");
+            break;
+        case TokenType::END_OF_FILE:
+            storeIRCode("END", "_", "_", "_");
+            // <空语句>
             break;
         default:
             error(tempToken, "Expect statement.");
@@ -267,9 +276,13 @@ void Parser::assignmentStatement(){
     if(token.getType() != TokenType::ASSIGN) {
         error(tempToken, "Expect ':=' in assignment statement.");
     }
+    tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
+
     string exp = expression();   // <表达式>
     if(token.getType() != TokenType::SEMICOLON) {
-        error(token, "Expect ';' at the end of assignment statement.");
+        error(tempToken, "Expect ';' at the end of assignment statement.");
     }
     // 语义分析与中间代码生成
     if(idTable.find(id) == idTable.end()) {
