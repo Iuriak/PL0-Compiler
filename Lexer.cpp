@@ -47,7 +47,12 @@ Token Lexer::nextToken()
             // 情况4：当前字符是注释
             else if (ch == '/')
             {
-                skipComment();
+                bool devide = skipComment();
+                if (devide)
+                {
+                    state = State::START;
+                    return Token(TokenType::DIVIDE, "/");
+                }
             }
             // 情况5：当前字符是文件末尾
             else if (ch == '\0')
@@ -174,7 +179,7 @@ Token Lexer::handleSymbol()
         return Token(TokenType::MINUS, "-");
     case '*':
         return Token(TokenType::MULTIPLY, "*");
-    case '/':
+    //case '/':
         /*
         if (source[pos] == '/')
         {
@@ -209,7 +214,7 @@ Token Lexer::handleSymbol()
             }
         }
         else*/
-        return Token(TokenType::DIVIDE, "/");
+        //return Token(TokenType::DIVIDE, "/");
     case '(':
         return Token(TokenType::LEFT_PAREN, "(");
     case ')':
@@ -358,12 +363,14 @@ void Lexer::skipWhitespace()
 }
 
 // 跳过注释
-void Lexer::skipComment()
+bool Lexer::skipComment()
 {
+    bool devide = true;
     if (match('/'))
     {
         if (match('/'))
         {
+            devide = false;
             // 单行注释，跳过直到行末
             while (!isAtEnd() && peek() != '\n')
             {
@@ -371,7 +378,8 @@ void Lexer::skipComment()
             }
         }
         else if (match('*'))
-        {
+        {   
+            devide = false;
             // 多行注释，跳过直到 '*/'
             while (!isAtEnd())
             {
@@ -395,6 +403,7 @@ void Lexer::skipComment()
             }
         }
     }
+    return devide;
 }
 
 // 判断是否到达代码末尾

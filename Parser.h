@@ -39,7 +39,7 @@ private:
     void statement();          // 实现对应于文法中的 <语句>
     void assignmentStatement();// 实现对应于文法中的 <赋值语句>
     void conditionStatement(); // 实现对应于文法中的 <条件语句>
-    void cyclicStatement();     // 实现对应于文法中的 <当型循环语句>
+    void cyclicStatement();    // 实现对应于文法中的 <当型循环语句>
     void compoundStatement();  // 实现对应于文法中的 <复合语句>
     //void voidStatement();      // 实现对应于文法中的 <空语句>
     

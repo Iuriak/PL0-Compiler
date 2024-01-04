@@ -317,7 +317,7 @@ void Parser::compoundStatement(){
             if(token.getType() == TokenType::SEMICOLON) {
                 nextToken();
             }
-            else if(token.getType() == TokenType::END) {
+            else if(token.getType() == TokenType::END || token.getType() == TokenType::END_OF_FILE) {
                 conpoundStatementFlag = true;
                 break;
             }
