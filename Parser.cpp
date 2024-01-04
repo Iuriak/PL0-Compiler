@@ -180,6 +180,9 @@ void Parser::varDeclaration() {
     tempToken.setColumn(lexer->getColumn());
     tempToken.setLine(lexer->getLine());
     nextToken();
+    if(token.getType() == TokenType::INVALID) {
+        error(tempToken, "Invalid identifier '"+token.getValue()+"'. Identifiers must begin with a letter.");
+    }
     if(token.getType() != TokenType::IDENTIFIER) {
         error(tempToken, "Expect identifier in var declaration.");
     }

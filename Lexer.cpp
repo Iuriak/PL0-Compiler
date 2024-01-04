@@ -73,8 +73,13 @@ Token Lexer::nextToken()
             {
                 read();
                 tokenString += ch;
-            }
-            else
+            } else if(isalpha(ch))  // 数字后面跟字母，报错
+            {
+                read();
+                tokenString += ch;
+                state = State::IN_ERROR;
+                return Token{TokenType::INVALID, tokenString};
+            } else
             {
                 state = State::START;
                 return Token{TokenType::NUMBER, tokenString};
