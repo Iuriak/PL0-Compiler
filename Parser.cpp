@@ -67,13 +67,21 @@ bool Parser::program() {
  * <程序⾸部>→PROGRAM <标识符>
 */
 void Parser::programHeader() {
+    Token tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
+
     nextToken();
     if(token.getType() != TokenType::PROGRAM) {
-        error(token, "Expect 'PROGRAM' at the beginning of program header.");
+        error(tempToken, "Expect 'PROGRAM' at the beginning of program header.");
     }
+    tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
+
     nextToken();
     if(token.getType() != TokenType::IDENTIFIER) {
-        error(token, "Expect program name after 'PROGRAM'.");
+        error(tempToken, "Expect program name after 'PROGRAM'.");
     }
     // 语义分析与中间代码生成
     // ...
@@ -131,17 +139,25 @@ void Parser::constDeclaration() {
  * <常量定义>→<标识符>:=<⽆符号整数>
 */
 void Parser::constDefinition(){
+    Token tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
+
     nextToken();
     if(token.getType() != TokenType::IDENTIFIER) {
-        error(token, "Expect identifier at the beginning of const definition.");
+        error(tempToken, "Expect identifier at the beginning of const definition.");
     }
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
     nextToken();
     if(token.getType() != TokenType::ASSIGN) {
-        error(token, "Expect ':=' in const definition.");
+        error(tempToken, "Expect ':=' in const definition.");
     }
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
     nextToken();
     if(token.getType() != TokenType::NUMBER) {
-        error(token, "Expect number in const definition.");
+        error(tempToken, "Expect number in const definition.");
     }
     idTable.insert(pair<string, string>(token.getValue(), "const")); // 将常量加入变量表
     int value = std::stoi(token.getValue());    // 获取常量值
@@ -160,18 +176,36 @@ void Parser::varDeclaration() {
         error(token, "Expect 'VAR' at the beginning of var declaration.");
     }*/
     //idTable.insert(pair<string, string>(token.getValue(), "var")); // 将变量加入变量表
+    Token tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
     nextToken();
     if(token.getType() != TokenType::IDENTIFIER) {
-        error(token, "Expect identifier in var declaration.");
+        error(tempToken, "Expect identifier in var declaration.");
     }
     idTable.insert(pair<string, string>(token.getValue(), "var")); // 将变量加入变量表
+    
+    tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
+
     nextToken();
+    if(token.getType() != TokenType::COMMA && token.getType() != TokenType::SEMICOLON) {
+        error(tempToken, "Expect ',' or ';' in var declaration.");
+    }
+
     while(token.getType() == TokenType::COMMA) {
+        tempToken = token;
+        tempToken.setColumn(lexer->getColumn());
+        tempToken.setLine(lexer->getLine());
         nextToken();
         if(token.getType() != TokenType::IDENTIFIER) {
             error(token, "Expect identifier in var declaration.");
         }
         idTable.insert(pair<string, string>(token.getValue(), "var")); // 将变量加入变量表
+        tempToken = token;
+        tempToken.setColumn(lexer->getColumn());
+        tempToken.setLine(lexer->getLine());
         nextToken();
     }
     if(token.getType() != TokenType::SEMICOLON) {
@@ -187,6 +221,10 @@ void Parser::varDeclaration() {
 */
 void Parser::statement() {
     // nextToken();
+    Token tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
+
     switch(token.getType()) {
         case TokenType::IDENTIFIER:
             assignmentStatement();  // <赋值语句>
@@ -205,7 +243,7 @@ void Parser::statement() {
             //voidStatement();       // <空语句>
             break;
         default:
-            error(token, "Expect statement.");
+            error(tempToken, "Expect statement.");
     }
 }
 
@@ -217,15 +255,22 @@ void Parser::statement() {
 */
 void Parser::assignmentStatement(){
     // token 已经指向 IDENTIFIER
+    Token tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
+
     string id = token.getValue();   // <标识符>
     nextToken();
     if(token.getType() != TokenType::ASSIGN) {
-        error(token, "Expect ':=' in assignment statement.");
+        error(tempToken, "Expect ':=' in assignment statement.");
     }
     string exp = expression();   // <表达式>
+    if(token.getType() != TokenType::SEMICOLON) {
+        error(token, "Expect ';' at the end of assignment statement.");
+    }
     // 语义分析与中间代码生成
     if(idTable.find(id) == idTable.end()) {
-        error(token, "Identifier not declared.");
+        error(tempToken, "Identifier '"+ id +"' not declared.");
     } else{
         string arg1 = exp;
         string arg2 = "_";
@@ -254,10 +299,9 @@ void Parser::conditionStatement(){
         error(token, "Expect 'THEN' in condition statement.");
     }
     nextToken();
-    // IR[label1][3] = to_string(IR.size());
     statement();    // <语句>
     IR[label2][3] = to_string(IR.size()+base_addr);
-    // 语义分析与中间代码生成
+
 }
 
 /**
@@ -313,6 +357,9 @@ void Parser::compoundStatement(){
                     break;
                 }
             }
+            Token tempToken = token;
+            tempToken.setColumn(lexer->getColumn());
+            tempToken.setLine(lexer->getLine());
             nextToken();
             if(token.getType() == TokenType::SEMICOLON) {
                 nextToken();
@@ -322,7 +369,7 @@ void Parser::compoundStatement(){
                 break;
             }
             else {
-                error(token, "Expect ';' or 'END' in compound statement.");
+                error(tempToken, "Expect ';' or 'END' in compound statement.");
             }
         }
         statement();    // <语句>
@@ -393,10 +440,13 @@ string Parser::term(){
 */
 string Parser::factor(){
     string result;
+    Token tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
     switch(token.getType()) {
         case TokenType::IDENTIFIER:
             if(idTable.find(token.getValue()) == idTable.end()) {
-                error(token, "Identifier not declared.");
+                error(tempToken, "Identifier not declared.");
             } else{
                 result = token.getValue();
             }
@@ -408,11 +458,11 @@ string Parser::factor(){
             result = expression();  // <表达式>
             nextToken();
             if(token.getType() != TokenType::RIGHT_PAREN) {
-                error(token, "Expect ')' in factor.");
+                error(tempToken, "Expect ')' in factor.");
             }
             break;
         default:
-            error(token, "Expect factor.");
+            error(tempToken, "Expect factor.");
     }
     return result;
 }
@@ -430,7 +480,6 @@ array<string, 3> Parser::condition(){
         error(token, "Expect relation operator in condition.");
     }
     string op = token.getValue();   // <关系运算符>
-    //nextToken();
     string arg2 = expression(); // <表达式>
     // 语义分析与中间代码生成
     return {op, arg1, arg2};
@@ -467,7 +516,7 @@ bool Parser::isAtEnd() {
 */
 void Parser::error(const Token& token, const string& message) {
     // 抛出一个解析错误
-    throw runtime_error("Error at [" + std::to_string(lexer->getLine()) + ":" + std::to_string(lexer->getColumn()) + "]: " + message);
+    throw runtime_error("Error at [" + std::to_string(token.getLine()) + ":" + std::to_string(token.getColumn()) + "]: " + message);
     //throw std::runtime_error("Error at [" + std::to_string(token.line) + ":" + std::to_string(token.column) + "]: " + message);
 }
 

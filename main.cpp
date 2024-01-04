@@ -40,6 +40,7 @@ int main(int argc, char* argv[]) {
     parser.output(IRout, ITout);
     IRout.close();
     ITout.close();
+    cout << "IR and IT saved successfully!" << endl;
 
     return 0;
 }

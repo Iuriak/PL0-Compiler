@@ -53,13 +53,20 @@ class Token
 {
 public:
     Token(TokenType type, std::string value) : type(type), value(value) {}
+    Token(TokenType type, std::string value, int line, int column) : type(type), value(value), line(line), column(column) {}
     Token() : type(TokenType::INVALID), value("") {}
     TokenType getType() const { return type; }
     string getValue() const { return value; }
+    int getLine() const { return line; }
+    int getColumn() const { return column; }
+    void setLine(int line) { this->line = line; }
+    void setColumn(int column) { this->column = column; }
 
 private:
     TokenType type;    // Token类型
     string value; // Token值
+    int line = 1;     // Token所在行号
+    int column = 1;   // Token所在列号
 };
 
 /**
@@ -110,7 +117,8 @@ public:
     Token nextToken();  // 获取下一个Token
     int getLine() const { return line; }        // 获取当前行号
     int getColumn() const { return column; }    // 获取当前列号
-
+    char peek() const;      // 预读下一个字符
+    char peekNext() const;  // 预读下下个字符
 private:
     enum class State    // 词法分析器状态
     {
@@ -134,8 +142,6 @@ private:
     void read();
     bool match(char expected);
     void skipWhitespace();
-    void skipComment();
+    bool skipComment();
     bool isAtEnd() const;
-    char peek() const;
-    char peekNext() const;
 };
