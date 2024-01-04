@@ -251,7 +251,7 @@ void Parser::statement() {
             storeIRCode("END", "_", "_", "_");
             break;
         case TokenType::END_OF_FILE:
-            storeIRCode("END", "_", "_", "_");
+            // storeIRCode("END", "_", "_", "_");
             // <空语句>
             break;
         default:
@@ -308,11 +308,15 @@ void Parser::conditionStatement(){
     string temp_IF = getTempVar();          // 临时变量代替条件表达式的值
     storeIRCode(orp, arg1, arg2, temp_IF);
 
+    Token tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
+
     auto label2 = IR.size();
     storeIRCode("JUMPFALSE", temp_IF, "_", "M");
     // token 此时应该指向 THEN
     if(token.getType() != TokenType::THEN) {
-        error(token, "Expect 'THEN' in condition statement.");
+        error(tempToken, "Expect 'THEN' in condition statement.");
     }
     nextToken();
     statement();    // <语句>
@@ -334,11 +338,15 @@ void Parser::cyclicStatement(){
     string temp_WHILE = getTempVar();          // 临时变量代替条件表达式的值
     storeIRCode(orp, arg1, arg2, temp_WHILE);
 
+    Token tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
+
     auto label2 = IR.size();
     storeIRCode("JUMPFALSE", temp_WHILE, "_", "M");
     // token 指向 DO
     if(token.getType() != TokenType::DO) {
-        error(token, "Expect 'DO' in cyclic statement.");
+        error(tempToken, "Expect 'DO' in cyclic statement.");
     }
     nextToken();
     // IR[label1][3] = to_string(IR.size());
@@ -355,10 +363,30 @@ void Parser::cyclicStatement(){
 */
 void Parser::compoundStatement(){
     // token 已经指向 BEGIN
+    Token tempToken = token;
+    tempToken.setColumn(lexer->getColumn());
+    tempToken.setLine(lexer->getLine());
     nextToken();
+    if(token.getType() != TokenType::END_OF_FILE) {
+        if(token.getType() != TokenType::END) {
+            if(token.getType() != TokenType::IDENTIFIER && token.getType() != TokenType::IF
+                && token.getType() != TokenType::WHILE && token.getType() != TokenType::BEGIN) {
+                error(tempToken, "Expect statement in compound statement.");
+            }
+        }
+        else {
+            error(tempToken, "Expect statement in compound statement.");
+        }
+    }
+    else {
+        error(tempToken, "Expect statement in compound statement.");
+    }
     statement();    // <语句>
     while(1) {
         if(token.getType() == TokenType::SEMICOLON) {
+            tempToken = token;
+            tempToken.setColumn(lexer->getColumn());
+            tempToken.setLine(lexer->getLine());
             nextToken();
             // 一个语句已经结束，且后面可能跟着另一个语句或者空语句。
         } else {
@@ -369,18 +397,25 @@ void Parser::compoundStatement(){
                 }
                 // 结束嵌套的复合语句
                 else {
+                    // 没有END，而是直接结束了
+                    if(token.getType() == TokenType::END_OF_FILE) {
+                        error(tempToken, "Expect 'END' in compound statement.");
+                    }
                     conpoundStatementFlag = true;
                     break;
                 }
             }
-            Token tempToken = token;
+            tempToken = token;
             tempToken.setColumn(lexer->getColumn());
             tempToken.setLine(lexer->getLine());
             nextToken();
             if(token.getType() == TokenType::SEMICOLON) {
+                tempToken = token;
+                tempToken.setColumn(lexer->getColumn());
+                tempToken.setLine(lexer->getLine());
                 nextToken();
             }
-            else if(token.getType() == TokenType::END || token.getType() == TokenType::END_OF_FILE) {
+            else if(token.getType() == TokenType::END) { //  || token.getType() == TokenType::END_OF_FILE
                 conpoundStatementFlag = true;
                 break;
             }
