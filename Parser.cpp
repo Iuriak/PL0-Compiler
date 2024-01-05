@@ -14,8 +14,9 @@ using namespace std;
 struct Identifier {
     string type;
     string value;
+    bool initialized;
 
-    Identifier() : type(""), value("null") {} // 默认构造函数
+    Identifier() : type(""), value("null"), initialized(false) {} // 默认构造函数
     Identifier(string type, string value) : type(type), value(value) {} // 自定义构造函数
 };
 
@@ -60,6 +61,7 @@ bool Parser::program() {
     try{
         programHeader();    //  <程序首部>
         block();            //  <分程序>
+        storeIRCode("END", "_", "_", "_");
         return true;
     } catch (const std::runtime_error& e) {
         std::cerr << e.what() << std::endl;
@@ -162,11 +164,28 @@ void Parser::constDefinition(){
     }
     tempToken.setColumn(lexer->getColumn());
     tempToken.setLine(lexer->getLine());
-    nextToken();
+    // 正负号
+    //bool sign_MINUS =false;
+    //string op_PLUS_MINUS;
+	nextToken();
+    /*
+	if (token.getType() == TokenType::PLUS || token.getType() == TokenType::MINUS) {
+		// 语义处理
+        op_PLUS_MINUS = token.getValue();   // <加法运算符>
+        if(op_PLUS_MINUS == "-")
+		    sign_MINUS = true;
+		nextToken();
+	}
     if(token.getType() != TokenType::NUMBER) {
         error(tempToken, "Expect number in const definition.");
     }
+    if(sign_MINUS) {
+        idTable[id] = Identifier("const", op_PLUS_MINUS + token.getValue()); // 将常量加入变量表
+    } else {
+        idTable[id] = Identifier("const", token.getValue()); // 将常量加入变量表
+    }*/
     idTable[id] = Identifier("const", token.getValue()); // 将常量加入变量表
+    idTable[id].initialized = true; // 常量已经初始化
     //idTable.insert(pair<string, string>(token.getValue(), "const")); // 将常量加入变量表
     int value = std::stoi(token.getValue());    // 获取常量值
     // 语义分析与中间代码生成
@@ -233,7 +252,6 @@ void Parser::varDeclaration() {
  * <语句>→<赋值语句> | <条件语句 >| <循环语句> | <复合语句> | <空语句>
 */
 void Parser::statement() {
-    // nextToken();
     Token tempToken = token;
     tempToken.setColumn(lexer->getColumn());
     tempToken.setLine(lexer->getLine());
@@ -255,10 +273,9 @@ void Parser::statement() {
             // <空语句>
             break;
         case TokenType::END:
-            storeIRCode("END", "_", "_", "_");
+            // <空语句>
             break;
         case TokenType::END_OF_FILE:
-            // storeIRCode("END", "_", "_", "_");
             // <空语句>
             break;
         default:
@@ -288,9 +305,9 @@ void Parser::assignmentStatement(){
     tempToken.setLine(lexer->getLine());
 
     string exp = expression();   // <表达式>
-    if(token.getType() != TokenType::SEMICOLON) {
+    /*if(token.getType() != TokenType::SEMICOLON) {
         error(tempToken, "Expect ';' at the end of assignment statement.");
-    }
+    }*/
     // 语义分析与中间代码生成
     if(idTable.find(id) == idTable.end()) {
         error(tempToken, "Identifier '"+ id +"' not declared.");
@@ -300,6 +317,7 @@ void Parser::assignmentStatement(){
         string result = id;
         storeIRCode(":=", arg1, arg2, result);  // 生成中间代码
         idTable[id].value = exp;
+        idTable[id].initialized = true;
     }
 }
 
@@ -375,6 +393,9 @@ void Parser::compoundStatement(){
     tempToken.setColumn(lexer->getColumn());
     tempToken.setLine(lexer->getLine());
     nextToken();
+    if(token.getType() == TokenType::END_OF_FILE)
+        error(tempToken, "Expect 'END' in compound statement.");
+    /*
     if(token.getType() != TokenType::END_OF_FILE) {
         if(token.getType() != TokenType::END) {
             if(token.getType() != TokenType::IDENTIFIER && token.getType() != TokenType::IF
@@ -388,7 +409,7 @@ void Parser::compoundStatement(){
     }
     else {
         error(tempToken, "Expect 'END' in compound statement.");
-    }
+    }*/
     statement();    // <语句>
     while(1) {
         if(token.getType() == TokenType::SEMICOLON) {
@@ -396,26 +417,31 @@ void Parser::compoundStatement(){
             tempToken.setColumn(lexer->getColumn());
             tempToken.setLine(lexer->getLine());
             nextToken();
+            if(token.getType() == TokenType::END) {
+                error(tempToken, "Unexpect ';' in compound statement.");
+            }
             // 一个语句已经结束，且后面可能跟着另一个语句或者空语句。
         } else {
-            if(token.getType() != TokenType::END) {
+            tempToken = token;
+            tempToken.setColumn(lexer->getColumn());
+            tempToken.setLine(lexer->getLine());
+            if(token.getType() == TokenType::END) {
                 // 当前处于嵌套的复合语句中，需要重置Flag
                 if(conpoundStatementFlag) {
                     conpoundStatementFlag = false;
                 }
                 // 结束嵌套的复合语句
                 else {
-                    // 没有END，而是直接结束了
-                    if(token.getType() == TokenType::END_OF_FILE) {
-                        error(tempToken, "Expect 'END' in compound statement.");
-                    }
                     conpoundStatementFlag = true;
                     break;
                 }
             }
-            tempToken = token;
-            tempToken.setColumn(lexer->getColumn());
-            tempToken.setLine(lexer->getLine());
+            else if(token.getType() == TokenType::END_OF_FILE){
+                error(tempToken, "Expect 'END' in compound statement.");
+            }
+            else if(token.getType() != TokenType::SEMICOLON) {
+                error(tempToken, "Expect ';' before this statement.");
+            }
             nextToken();
             if(token.getType() == TokenType::SEMICOLON) {
                 tempToken = token;
@@ -423,12 +449,12 @@ void Parser::compoundStatement(){
                 tempToken.setLine(lexer->getLine());
                 nextToken();
             }
-            else if(token.getType() == TokenType::END || token.getType() == TokenType::END_OF_FILE) { //  
+            else if(token.getType() == TokenType::END) { //   || token.getType() == TokenType::END_OF_FILE
                 conpoundStatementFlag = true;
                 break;
             }
             else {
-                error(tempToken, "Expect ';' or 'END' in compound statement.");
+                error(tempToken, "Expect 'END' in compound statement.");
             }
         }
         statement();    // <语句>
@@ -445,19 +471,40 @@ void Parser::compoundStatement(){
 */
 string Parser::expression(){
     // 正负号
-    bool negative =false;
+    bool sign_MINUS =false;
+    string op_PLUS_MINUS;
 	nextToken();
 	if (token.getType() == TokenType::PLUS || token.getType() == TokenType::MINUS) {
 		// 语义处理
-		negative = true;
+        op_PLUS_MINUS = token.getValue();   // <加法运算符>
+        if(op_PLUS_MINUS == "-")
+		    sign_MINUS = true;
 		nextToken();
 	}
     string result = term(); // <项>
+    if(sign_MINUS) {
+        result = op_PLUS_MINUS + result;
+    }
+    
     while(token.getType() == TokenType::PLUS || token.getType() == TokenType::MINUS) {
         string temp = getTempVar();    // 临时变量
         string op = token.getValue();   // <加法运算符>
         string arg1 = result;
+
+        // 正负号
+        //sign_MINUS =false;
         nextToken();
+        /*
+        if (token.getType() == TokenType::PLUS || token.getType() == TokenType::MINUS) {
+            // 语义处理
+            op_PLUS_MINUS = token.getValue();   // <加法运算符>
+            if(op_PLUS_MINUS == "-")
+                sign_MINUS = true;
+            nextToken();
+        }
+        if(sign_MINUS) {
+            arg2 = op_PLUS_MINUS + arg2;
+        }*/
         string arg2 = term();   // <项>
         storeIRCode(op, arg1, arg2, temp);  // 生成中间代码
         result = temp;
@@ -519,6 +566,8 @@ string Parser::factor(){
         case TokenType::IDENTIFIER:
             if(idTable.find(token.getValue()) == idTable.end()) {
                 error(tempToken, "Identifier not declared.");
+            } else if (!idTable[token.getValue()].initialized) {
+                error(tempToken, "Identifier '" + token.getValue() + "' used without being initialized.");
             } else{
                 result = token.getValue();
             }
@@ -528,7 +577,7 @@ string Parser::factor(){
             break;
         case TokenType::LEFT_PAREN:
             result = expression();  // <表达式>
-            nextToken();
+            // nextToken();
             if(token.getType() != TokenType::RIGHT_PAREN) {
                 error(tempToken, "Expect ')' in factor.");
             }
