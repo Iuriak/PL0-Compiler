@@ -11,8 +11,15 @@
 #include <map> 
 
 using namespace std;
+struct Identifier {
+    string type;
+    string value;
 
-map<string, string> idTable;    // 变量表
+    Identifier() : type(""), value("null") {} // 默认构造函数
+    Identifier(string type, string value) : type(type), value(value) {} // 自定义构造函数
+};
+
+map<string, Identifier> idTable;    // 变量表<id, Identifier>
 map<string, string> tempTable;  // 临时变量表
 int tempVarNum = 1;             // 临时变量编号
 int base_addr = 100;            // 变量基地址
@@ -38,9 +45,9 @@ void Parser::output(std::ofstream &IRout, std::ofstream &ITout) {
         IRout << ord++ << " (" << i[0] << ", " << i[1] << ", " << i[2] << ", " << i[3] << ")" << endl;
     }
     // 输出变量表
-    ITout << "Identifier,Type" << endl;
-    for(auto i : idTable) {
-        ITout << i.first << "," << i.second << endl;
+    ITout << "Identifier,Type,Value" << endl;
+    for(auto &entry : idTable) {
+        ITout << entry.first << "," << entry.second.type << "," << entry.second.value << endl;
     }
 }
 
@@ -117,10 +124,6 @@ void Parser::block() {
 */
 void Parser::constDeclaration() {
     // token 指向 CONST
-    /*nextToken();
-    if(token.getType() != TokenType::CONST) {
-        error(token, "Expect 'CONST' at the beginning of const declaration.");
-    }*/
     constDefinition();
     nextToken();
     while(token.getType() == TokenType::COMMA) {
@@ -144,6 +147,7 @@ void Parser::constDefinition(){
     tempToken.setLine(lexer->getLine());
 
     nextToken();
+    string id = token.getValue();   // <标识符>
     if(token.getType() == TokenType::INVALID) {
         error(tempToken, "Invalid identifier '"+token.getValue()+"'. Identifiers must begin with a letter.");
     }
@@ -162,7 +166,8 @@ void Parser::constDefinition(){
     if(token.getType() != TokenType::NUMBER) {
         error(tempToken, "Expect number in const definition.");
     }
-    idTable.insert(pair<string, string>(token.getValue(), "const")); // 将常量加入变量表
+    idTable[id] = Identifier("const", token.getValue()); // 将常量加入变量表
+    //idTable.insert(pair<string, string>(token.getValue(), "const")); // 将常量加入变量表
     int value = std::stoi(token.getValue());    // 获取常量值
     // 语义分析与中间代码生成
 }
@@ -189,7 +194,8 @@ void Parser::varDeclaration() {
     if(token.getType() != TokenType::IDENTIFIER) {
         error(tempToken, "Expect identifier in var declaration.");
     }
-    idTable.insert(pair<string, string>(token.getValue(), "var")); // 将变量加入变量表
+    idTable[token.getValue()] = Identifier("var", "null"); // 将变量加入变量表
+    //idTable.insert(pair<string, string>(token.getValue(), "var")); // 将变量加入变量表
     
     tempToken = token;
     tempToken.setColumn(lexer->getColumn());
@@ -208,7 +214,8 @@ void Parser::varDeclaration() {
         if(token.getType() != TokenType::IDENTIFIER) {
             error(token, "Expect identifier in var declaration.");
         }
-        idTable.insert(pair<string, string>(token.getValue(), "var")); // 将变量加入变量表
+        idTable[token.getValue()] = Identifier("var", "null"); // 将变量加入变量表
+        // idTable.insert(pair<string, string>(token.getValue(), "var")); // 将变量加入变量表
         tempToken = token;
         tempToken.setColumn(lexer->getColumn());
         tempToken.setLine(lexer->getLine());
@@ -292,6 +299,7 @@ void Parser::assignmentStatement(){
         string arg2 = "_";
         string result = id;
         storeIRCode(":=", arg1, arg2, result);  // 生成中间代码
+        idTable[id].value = exp;
     }
 }
 
@@ -379,7 +387,7 @@ void Parser::compoundStatement(){
         }
     }
     else {
-        error(tempToken, "Expect statement in compound statement.");
+        error(tempToken, "Expect 'END' in compound statement.");
     }
     statement();    // <语句>
     while(1) {
@@ -415,7 +423,7 @@ void Parser::compoundStatement(){
                 tempToken.setLine(lexer->getLine());
                 nextToken();
             }
-            else if(token.getType() == TokenType::END) { //  || token.getType() == TokenType::END_OF_FILE
+            else if(token.getType() == TokenType::END || token.getType() == TokenType::END_OF_FILE) { //  
                 conpoundStatementFlag = true;
                 break;
             }
@@ -474,7 +482,20 @@ string Parser::term(){
         string op = token.getValue();   // <乘法运算符>
         string arg1 = result;
         nextToken();
+        token.setColumn(lexer->getColumn());
+        token.setLine(lexer->getLine());
         string arg2 = factor();   // <因子>
+        
+        if(op == "/") {
+            // 检查 arg2 是否为直接数字
+            if (regex_match(arg2, regex("[+-]?\\d+(\\.\\d+)?")) && arg2 == "0") {
+                error(token, "Divide by zero.");
+            }
+            // 检查 arg2 是否在 idTable 内，并且它的值是否为 0
+            else if (idTable.count(arg2) > 0 && idTable[arg2].value == "0") {
+                error(token, "Divide by zero.");
+            }
+        }
         storeIRCode(op, arg1, arg2, temp);  // 生成中间代码
         result = temp;
         nextToken();

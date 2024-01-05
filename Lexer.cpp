@@ -92,6 +92,30 @@ Token Lexer::nextToken()
             {
                 read();
                 tokenString += ch;
+                if(pos == source.length())
+                {
+                    state = State::START;
+                    if(tokenString == "END")
+                        return Token(TokenType::END, tokenString);
+                    else if(tokenString == "IF")
+                        return Token(TokenType::IF, tokenString);
+                    else if(tokenString == "THEN")
+                        return Token(TokenType::THEN, tokenString);
+                    else if(tokenString == "WHILE")
+                        return Token(TokenType::WHILE, tokenString);
+                    else if(tokenString == "DO")
+                        return Token(TokenType::DO, tokenString);
+                    else if(tokenString == "BEGIN")
+                        return Token(TokenType::BEGIN, tokenString);
+                    else if(tokenString == "END")
+                        return Token(TokenType::END, tokenString);
+                    else if(tokenString == "VAR")
+                        return Token(TokenType::VAR, tokenString);
+                    else if(tokenString == "CONST")
+                        return Token(TokenType::CONST, tokenString);
+                    else
+                        return Token(TokenType::IDENTIFIER, tokenString);
+                }
             }
             else
             {
