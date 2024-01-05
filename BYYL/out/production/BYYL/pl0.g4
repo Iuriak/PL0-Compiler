@@ -68,4 +68,4 @@ condition : expression relationalOp expression;
 
 relationalOp : EQ | NEQ | LT | LTE | GT | GTE;
 
-emptyStatement : SEMI;
+emptyStatement : ;
