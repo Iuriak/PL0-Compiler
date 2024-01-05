@@ -15,9 +15,10 @@ public class Main {
                 "x:=1;\n" +
                 "y:=2;\n" +
                 "WHILE x<5 DO x:=x+1;\n" +
+                "y:=3;\n"+
                 "IF y>0 THEN y:=y-1;\n" +
                 "y:=y+x\n" +
-                "END"));
+                "END\n"));
         pl0Parser parser = new pl0Parser((new CommonTokenStream(lexer)));
         //parser.start();
         parser.setBuildParseTree(true);

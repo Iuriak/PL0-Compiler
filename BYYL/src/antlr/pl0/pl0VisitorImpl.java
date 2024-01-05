@@ -134,7 +134,7 @@ public class pl0VisitorImpl extends pl0BaseVisitor<String> {
         String labelEnd = newLabel();
 
         System.out.println("if " + condition + " goto " + labelElse);
-        visit(ctx.statement()); // Visit the true branch
+        //visit(ctx.statement()); // Visit the true branch
         System.out.println("goto " + labelEnd);
         System.out.println(labelElse + ":");
         if (ctx.statement() != null) {
@@ -148,11 +148,14 @@ public class pl0VisitorImpl extends pl0BaseVisitor<String> {
     @Override
     public String visitWhileStatement(pl0Parser.WhileStatementContext ctx) {
         String labelStart = newLabel();
+        String labelMiddle = newLabel();
         String labelEnd = newLabel();
 
         System.out.println(labelStart + ":");
         String condition = visit(ctx.condition());
-        System.out.println("if " + condition + " goto " + labelEnd);
+        System.out.println("if " + condition + " goto " + labelMiddle);
+        System.out.println("goto " + labelEnd);
+        System.out.println(labelMiddle + ":");
         visit(ctx.statement());
         System.out.println("goto " + labelStart);
         System.out.println(labelEnd + ":");

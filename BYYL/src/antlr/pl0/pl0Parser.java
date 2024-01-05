@@ -541,6 +541,8 @@ public class pl0Parser extends Parser {
 				whileStatement();
 				}
 				break;
+			case EOF:
+			case END:
 			case SEMI:
 				enterOuterAlt(_localctx, 5);
 				{
@@ -1281,7 +1283,6 @@ public class pl0Parser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class EmptyStatementContext extends ParserRuleContext {
-		public TerminalNode SEMI() { return getToken(pl0Parser.SEMI, 0); }
 		public EmptyStatementContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -1307,8 +1308,6 @@ public class pl0Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(155);
-			match(SEMI);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1432,7 +1431,7 @@ public class pl0Parser extends Parser {
 		"\u0000\u0000\u0000\u0095\u0096\u0003\u0012\t\u0000\u0096\u0097\u0003\""+
 		"\u0011\u0000\u0097\u0098\u0003\u0012\t\u0000\u0098!\u0001\u0000\u0000"+
 		"\u0000\u0099\u009a\u0007\u0002\u0000\u0000\u009a#\u0001\u0000\u0000\u0000"+
-		"\u009b\u009c\u0005\u0019\u0000\u0000\u009c%\u0001\u0000\u0000\u0000\n"+
+		"\u009b\u009c\u0001\u0000\u0000\u0000\u009c%\u0001\u0000\u0000\u0000\n"+
 		"-0:IS[fp~\u0089";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
