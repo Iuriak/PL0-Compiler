@@ -9,16 +9,16 @@ import pl0.pl0BaseVisitor;
 public class Main {
     public static void main(String[] args) {
 
-        pl0Lexer lexer = new pl0Lexer(CharStreams.fromString("PROGRAM add\n" +
-                "VAR x,y;\n" +
+        pl0Lexer lexer = new pl0Lexer(CharStreams.fromString("PROGRAM ArithmeticTest\n" +
+                "CONST d :=2;\n"+
+                "VAR a, b, c;\n" +
+
                 "BEGIN\n" +
-                "x:=1;\n" +
-                "y:=2;\n" +
-                "WHILE x<5 DO x:=x+1;\n" +
-                "y:=3;\n"+
-                "IF y>0 THEN y:=y-1;\n" +
-                "y:=y+x\n" +
-                "END\n"));
+                "    a := 5;\n" +
+                "    b := +2;\n" +
+                "    c := (a + b) * 2;\n" +
+                "    c := c / 2\n" +
+                "END"));
         pl0Parser parser = new pl0Parser((new CommonTokenStream(lexer)));
         //parser.start();
         parser.setBuildParseTree(true);
