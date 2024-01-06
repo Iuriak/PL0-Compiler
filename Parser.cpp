@@ -92,8 +92,6 @@ void Parser::programHeader() {
     if(token.getType() != TokenType::IDENTIFIER) {
         error(tempToken, "Expect program name after 'PROGRAM'.");
     }
-    // 语义分析与中间代码生成
-    // ...
 }
 
 /**
@@ -155,6 +153,8 @@ void Parser::constDefinition(){
     }
     if(token.getType() != TokenType::IDENTIFIER) {
         error(tempToken, "Expect identifier at the beginning of const definition.");
+    } else if(idTable.find(id) != idTable.end()) {  // 变量已经声明过
+        error(tempToken, "Identifier '"+ id +"' already declared.");
     }
     tempToken.setColumn(lexer->getColumn());
     tempToken.setLine(lexer->getLine());
@@ -168,6 +168,9 @@ void Parser::constDefinition(){
     //bool sign_MINUS =false;
     //string op_PLUS_MINUS;
 	nextToken();
+    if(token.getType() != TokenType::NUMBER) {
+        error(tempToken, "Expect number in const definition.");
+    }
     /*
 	if (token.getType() == TokenType::PLUS || token.getType() == TokenType::MINUS) {
 		// 语义处理
@@ -176,19 +179,17 @@ void Parser::constDefinition(){
 		    sign_MINUS = true;
 		nextToken();
 	}
-    if(token.getType() != TokenType::NUMBER) {
-        error(tempToken, "Expect number in const definition.");
-    }
+    
     if(sign_MINUS) {
         idTable[id] = Identifier("const", op_PLUS_MINUS + token.getValue()); // 将常量加入变量表
     } else {
         idTable[id] = Identifier("const", token.getValue()); // 将常量加入变量表
     }*/
+    storeIRCode(":=", token.getValue(), "_", id);  // 生成中间代码
     idTable[id] = Identifier("const", token.getValue()); // 将常量加入变量表
     idTable[id].initialized = true; // 常量已经初始化
     //idTable.insert(pair<string, string>(token.getValue(), "const")); // 将常量加入变量表
     int value = std::stoi(token.getValue());    // 获取常量值
-    // 语义分析与中间代码生成
 }
 
 /**
@@ -311,14 +312,34 @@ void Parser::assignmentStatement(){
     // 语义分析与中间代码生成
     if(idTable.find(id) == idTable.end()) {
         error(tempToken, "Identifier '"+ id +"' not declared.");
-    } else{
+    } else if(idTable.find(id) != idTable.end()){
+        if(idTable[id].type == "const") {
+            error(tempToken, "Identifier '"+ id +"' is a constant.");
+        }
+        else if(idTable[id].type == "var") {
+            if(idTable[id].value == "null") {
+                idTable[id].value = exp;
+                idTable[id].initialized = true;
+            }
+            else {
+                string arg1 = exp;
+                string arg2 = "_";
+                string result = id;
+                storeIRCode(":=", arg1, arg2, result);  // 生成中间代码
+                idTable[id].value = exp;
+                idTable[id].initialized = true;
+            }
+        }
+    }
+    /*
+    else{
         string arg1 = exp;
         string arg2 = "_";
         string result = id;
         storeIRCode(":=", arg1, arg2, result);  // 生成中间代码
         idTable[id].value = exp;
         idTable[id].initialized = true;
-    }
+    }*/
 }
 
 /**
@@ -417,9 +438,10 @@ void Parser::compoundStatement(){
             tempToken.setColumn(lexer->getColumn());
             tempToken.setLine(lexer->getLine());
             nextToken();
+            /*
             if(token.getType() == TokenType::END) {
                 error(tempToken, "Unexpect ';' in compound statement.");
-            }
+            }*/
             // 一个语句已经结束，且后面可能跟着另一个语句或者空语句。
         } else {
             tempToken = token;
@@ -460,7 +482,6 @@ void Parser::compoundStatement(){
         statement();    // <语句>
     }
     // 结束条件：token 指向 END，且conpoundStatementFlag为true
-    // 语义分析与中间代码生成
 }
 
 /**
@@ -606,38 +627,8 @@ array<string, 3> Parser::condition(){
     return {op, arg1, arg2};
 }
 
-/*Token Parser::consume(TokenType type, const std::string& message) {
-    if (check(type)) {
-        return advance();
-    }
-    throw std::runtime_error(message);
-}
-
-bool Parser::match(TokenType type) {
-    if (check(type)) {
-        advance();
-        return true;
-    }
-    return false;
-}
-
-bool Parser::check(TokenType type) {
-    if (isAtEnd()) return false;
-    return tokens[current].type == type;
-}
-
-Token Parser::advance() {
-    if (!isAtEnd()) current++;
-    return tokens[current - 1];
-}
-
-bool Parser::isAtEnd() {
-    return current >= tokens.size();
-}
-*/
 void Parser::error(const Token& token, const string& message) {
     // 抛出一个解析错误
     throw runtime_error("Error at [" + std::to_string(token.getLine()) + ":" + std::to_string(token.getColumn()) + "]: " + message);
-    //throw std::runtime_error("Error at [" + std::to_string(token.line) + ":" + std::to_string(token.column) + "]: " + message);
 }
 
