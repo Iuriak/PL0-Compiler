@@ -316,6 +316,7 @@ void Parser::assignmentStatement(){
         if(idTable[id].type == "const") {
             error(tempToken, "Identifier '"+ id +"' is a constant.");
         }
+        /*
         else if(idTable[id].type == "var") {
             if(idTable[id].value == "null") {
                 idTable[id].value = exp;
@@ -329,17 +330,14 @@ void Parser::assignmentStatement(){
                 idTable[id].value = exp;
                 idTable[id].initialized = true;
             }
-        }
+        }*/
     }
-    /*
-    else{
-        string arg1 = exp;
-        string arg2 = "_";
-        string result = id;
-        storeIRCode(":=", arg1, arg2, result);  // 生成中间代码
-        idTable[id].value = exp;
-        idTable[id].initialized = true;
-    }*/
+    string arg1 = exp;
+    string arg2 = "_";
+    string result = id;
+    storeIRCode(":=", arg1, arg2, result);  // 生成中间代码
+    idTable[id].value = exp;
+    idTable[id].initialized = true;
 }
 
 /**
