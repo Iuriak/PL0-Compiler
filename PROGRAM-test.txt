@@ -1,0 +1,248 @@
+复合语句：
+PROGRAM add
+VAR x,y;
+BEGIN
+
+// test single line comment
+x:=1;
+/* test multiple lines comments
+*/
+y:=2;
+WHILE x<5 DO x:=x+1;
+IF y>0 THEN y:=y-1;
+y:=y+x
+
+END
+
+
+
+基本算术运算：
+PROGRAM ArithmeticTest
+CONST a := 5;
+VAR b, c;
+BEGIN
+	b := -2;
+	c := (a+b)*2;
+	c := c/2
+END
+
+
+
+条件语句：
+PROGRAM ConditionTest
+VAR a;
+BEGIN
+	a := 5;
+	IF a < 10 THEN
+		a := a + 1
+END
+
+
+
+循环语句：
+PROGRAM LoopTest
+VAR b;
+BEGIN
+	b := 0;
+	WHILE b < 5 DO
+		b := b + 1
+END
+
+
+
+空语句：
+PROGRAM emptyStatement
+VAR x, y;
+BEGIN
+
+END
+
+
+错误处理：
+程序首部：
+PROGRAM缺失：
+MissingProgram
+VAR d;
+BEGIN
+	d := 10;
+	d := d+1
+END
+
+程序名称缺失：
+PROGRAM
+VAR d;
+BEGIN
+	d := 10;
+	d := d+1
+END
+
+
+常量声明错误：
+缺失常量赋值：
+PROGRAM IdentifierError
+CONST b;
+VAR a;
+BEGIN
+	a := b
+END
+
+数值缺失：
+PROGRAM IdentifierError
+CONST b := ;
+VAR a;
+BEGIN
+	a := b
+END
+
+
+
+常量重定义：
+PROGRAM IdentifierError
+CONST b := 10;
+VAR a;
+BEGIN
+    b:= 5;
+	a := b
+END
+
+
+PROGRAM IdentifierError
+CONST a := 1, a:=2;
+BEGIN
+    a:= 5;
+END
+
+
+未声明：
+PROGRAM ErrorTest
+BEGIN
+	x := 5
+END
+
+PROGRAM IdentifierError
+VAR
+BEGIN
+	1a := 5
+END
+
+
+
+命名错误：
+PROGRAM IdentifierError
+VAR 1a;
+BEGIN
+	1a := 10
+END
+
+PROGRAM IdentifierError
+CONST 1b := 10;
+VAR a1;
+BEGIN
+	a1 := 1b
+END
+
+
+分号缺失：
+PROGRAM MissingSemicolon
+VAR d;
+BEGIN
+	d := 10
+	d := d+1
+END
+
+
+
+因子缺失：
+PROGRAM MissingSemicolon
+VAR c;
+BEGIN
+	c := 10 +
+END
+
+
+
+复合语句结构不完整：!!!
+PROGRAM add
+VAR x,y;
+BEGIN
+x:=1;
+y:=2;
+WHILE x<5 DO x:=x+1;
+IF y>0 THEN y:=y-1;
+y:=y+x
+
+
+
+复合语句结构错误：
+PROGRAM emptyStatement
+VAR x,y;
+BEGIN
+	;
+END
+
+
+循环语句结构不完整：
+PROGRAM add
+VAR x,y;
+BEGIN
+x:=1;
+y:=2;
+WHILE x<5 x:=x+1;
+IF y>0 THEN y:=y-1;
+y:=y+x
+END
+
+
+条件语句结构不完整：
+PROGRAM add
+VAR x,y;
+BEGIN
+x:=1;
+y:=2;
+WHILE x<5 DO x:=x+1;
+IF y>0 y:=y-1;
+y:=y+x
+END
+
+
+使用未赋值变量：
+PROGRAM divide
+CONST a := 0;
+VAR x, y;
+BEGIN
+	x := y / a
+END
+
+
+除数为0：
+PROGRAM divide
+CONST a := 0;
+VAR x, y;
+BEGIN
+	y := 10;
+	x := y / a
+END
+
+
+其他测试案例：
+PROGRAM add
+CONST A:=1;
+VAR x,y;
+BEGIN
+x:=1;
+y:=2;
+IF y>0 THEN y:=y-1;
+y:=y+x;
+WHILE x<5 DO x:=x+0;
+END
+
+PROGRAM add
+CONST a:=22;
+VAR x,y;
+BEGIN
+x:=1;
+y:=2;
+IF y>0 THEN y:=y-1;
+y:=y+x;
+WHILE x<5 DO x:=x+a;
+END
