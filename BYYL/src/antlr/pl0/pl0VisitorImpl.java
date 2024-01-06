@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 public class pl0VisitorImpl extends pl0BaseVisitor<String> {
 
-    private Map<String, String> symbolTable;
+
     private int tempVarCounter = 0;
     private int labelCounter = 0;
 
@@ -42,6 +42,8 @@ public class pl0VisitorImpl extends pl0BaseVisitor<String> {
         return null;
 
     }
+    
+    private Map<String, String> symbolTable;
     private void checkVariable(String variable) {
         if (!symbolTable.containsKey(variable)) {
             // Undeclared variable error
